@@ -18,7 +18,11 @@ class DeviceLogAdmin(admin.ModelAdmin):
 
 @admin.register(Device)
 class DeviceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code', 'des', 'device_type')
+    list_display = ('id', 'name', 'code', 'des', 'get_device_types')
+    filter_horizontal = ('device_type',)  # optional, for nicer form widget
+
+    def get_device_types(self, obj):
+        return ", ".join([dt.parameter for dt in obj.device_type.all()])
     # inlines = [DeviceTypeInline, DeviceLogInline]
     # inlines = [DeviceTypeInline, ]
 

@@ -1,0 +1,4 @@
+custom create method for models:
+https://docs.djangoproject.com/en/5.2/ref/models/instances
+
+
