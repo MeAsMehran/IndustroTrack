@@ -5,9 +5,11 @@ from rest_framework.generics import CreateAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAdminUser
 from rest_framework.views import APIView
 from .models import  Device, DeviceLog, DeviceType
+from rest_framework.decorators import api_view
 from rest_framework import status
 from .serializers import DeviceSerializer, DeviceTypeSerializer, DeviceLogSerializer
 from django.core.cache import cache
+# from .tasks import process_receive_send_data
 
 
 # Create your views here.
@@ -54,7 +56,7 @@ class DetailDevice(RetrieveAPIView):
 class ShowDataView(APIView):
     def post(self, request, *args, **kwargs):
         # received_data = request.data  # this contains the JSON sent by DetailDevice
-        # serializer = DeviceSerializer(RecieveData)
+        # serializer = DeviceSerializer(ReceiveData)
         received_data = cache.get('cached_data')
 
         if received_data:
@@ -69,11 +71,18 @@ class ShowDataView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
 
+# @api_view(["GET"])
+# def test_send(request):
+#     # process_receive_send_data.delay()
+#     return Response({"message": "Task triggered"})
+
+
+
 class SendDate(APIView):
     permission_classes = [IsAdminUser]
 
     
-# class RecieveData(APIView):
-#     permission_classes = [IsAdminUser]
+class ReceivedData(APIView):
+    permission_classes = [IsAdminUser]
 
 
