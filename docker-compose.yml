@@ -1,0 +1,127 @@
+
+# docker-compose file stays out of any service directory such as dadrah_config or etc. We want to add other services like front-end and celery worker so it should be in outter layer.
+
+version: '3.8'
+
+services:
+
+  #########
+  db:
+    image: postgres:17.5
+    container_name: IndustroTrackDB
+    environment:
+      POSTGRES_DB: industro_track_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"  # Optional if you want to connect from host
+
+
+  ##########
+  redis:
+    image: redis:7.0.11-alpine
+
+
+  ##########
+  django:
+    container_name: django_industro_track
+    build:
+      context: ./IndustroTrack
+      dockerfile: Dockerfile
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./IndustroTrack:/app/
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - db
+    environment:
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-qxgavaaum3gp9yf2ptl=cm^*)ey^)d^x9orc!j8oana9d1aq5x
+
+      - DB_NAME=industro_track_db
+      - DB_USER=postgres
+      - DB_PASSWORD=admin
+      - DB_HOST=db
+      - DB_PORT=5432
+
+
+  ########
+  # this celery worker (main celery settings) is for scraping data from the site.
+  celery:
+  # image:  any_name_you_want_for_the_image
+    container_name: celery_industro_track
+  # In my dadrah_config directory(context:) I have a dockerfile named Dockerfile(dockerfile:). run the command celery -A Dadrah worker -l INFO to run the service(command:)
+    build:
+      context: ./IndustroTrack
+      dockerfile: Dockerfile
+    command: celery -A IndustroTrack worker -l INFO     # -Q somename: makes a queue with name "somename" so tasks can run by a specific workers queue!
+    volumes:
+      - ./IndustroTrack:/app
+    
+    depends_on:
+      - django
+      - redis
+      - db
+    environment:
+      - ALLOWED_HOSTS=localhost,127.0.0.1,django
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-qxgavaaum3gp9yf2ptl=cm^*)ey^)d^x9orc!j8oana9d1aq5x
+
+      - DB_NAME=industro_track_db
+      - DB_USER=postgres
+      - DB_PASSWORD=admin
+      - DB_HOST=db
+      - DB_PORT=5432
+
+
+  #########
+  celery-beat:
+    container_name: celery_beat_industro_track
+    build: ./IndustroTrack
+    command: celery -A IndustroTrack beat --loglevel=info
+    volumes:
+      - ./IndustroTrack:/app
+    depends_on:
+      - django
+      - db
+      - redis
+    environment:
+      - ALLOWED_HOSTS=localhost,127.0.0.1,django
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-qxgavaaum3gp9yf2ptl=cm^*)ey^)d^x9orc!j8oana9d1aq5x
+
+      - DB_NAME=industro_track_db
+      - DB_USER=postgres
+      - DB_PASSWORD=admin
+      - DB_HOST=db
+      - DB_PORT=5432
+
+  ########
+  # This celery is for sending otp notifications to users in dadrah project
+  # stand_alone_celery:
+  # # image:  any_name_you_want_for_the_image
+  #   container_name: stand_alone_celery
+  #   build:
+  #     context: ./celery_worker
+  #     dockerfile: Dockerfile
+  #   command: celery -A celery_base worker -l INFO -Q queue2  # should start from celery_base.py file |  # -Q somename: makes a queue with name "somename" so tasks can run by a specific workers queue!
+  #   volumes:
+  #     - ./celery_worker:/app
+  #   depends_on:
+  #     - redis
+  #     - db
+  #     - django
+  #   environment:
+  #     - BROKER_URL=redis://redis:6379/0
+  #     - RESULT_BACKEND=redis://redis:6379/0
+  #
+
+volumes:
+  postgres_data:
+
+

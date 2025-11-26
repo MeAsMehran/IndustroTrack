@@ -12,21 +12,23 @@ from django.urls import reverse
 @shared_task(name='machine.tasks.send_cached_device_data')
 def send_cached_device_data():
     # print("Running send_cached_device_data")
-    device = Device.objects.get(pk=1)
+    # device = Device.objects.get(pk=1)
+    #
+    # data = {
+    #     'device_id': device.id,
+    #     'device_name': device.name,
+    #     'device_code': device.code,
+    #     # 'device_type': device.device_type,
+    # }
+    #
+    # url_path = "http://localhost:8000" + reverse('machine:show_data')
+    #
+    #
+    # cache.set("cached_data", data, timeout=20)
+    # print(data)
+    # requests.post(url=url_path, json=data)
 
-    data = {
-        'device_id': device.id,
-        'device_name': device.name,
-        'device_code': device.code,
-        # 'device_type': device.device_type,
-    }
-
-    url_path = "http://localhost:8000" + reverse('machine:show_data')
-
-
-    cache.set("cached_data", data, timeout=20)
-    print(data)
-    requests.post(url=url_path, json=data)
+    print("=========== HELLO HERE =========")
 
 
 
