@@ -40,9 +40,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'rest_framework_simplejwt',
     'drf_yasg',
 
     'machine.apps.MachineConfig',
+    'account.apps.AccountConfig',
+
 ]
 
 MIDDLEWARE = [
@@ -91,6 +94,14 @@ DATABASES = {
         'HOST': os.getenv('DB_HOST', 'db'),  # MUST BE "db", not "localhost"
         'PORT': os.getenv('DB_PORT', '5432'),
     },
+}
+
+
+# DJANGO REST FRAME WORK CONFIG:
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
 }
 
 
