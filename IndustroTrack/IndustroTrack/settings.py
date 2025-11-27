@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'drf_yasg',
 
     'machine.apps.MachineConfig',
 ]
@@ -140,9 +141,20 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Celery Configuration Options
 CELERY_TIMEZONE = "Asia/Tehran"
 CELERY_BEAT_SCHEDULE = {
-    "send-device-data-every-minute": {
-        "task": "machine.tasks.send_cached_device_data",
-        "schedule": 20.0,
+    # "send-device-data-every-minute": {
+    #     "task": "machine.tasks.send_cached_device_data",
+    #     "schedule": 60.0,
+    # },
+
+    # "fetch_machine_status": {
+    #     "task": "machine.tasks.fetch_machine_status",
+    #     "schedule": 10.0,
+    # },
+
+    "fetch_data_and_send": {
+        "task": "machine.tasks.fetch_data_and_send",
+        "schedule": 5.0,
+        "args": (2,),
     },
 }
 CELERY_TASK_TRACK_STARTED = True
@@ -167,7 +179,24 @@ CACHES = {
 }
 
 
-# Optional: This is to ensure Django sessions are stored in Redis
+# Optional: This is to ensure Django sessions are stored in Redis0
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'
+
+# SWAGGER SETTINGS:
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+        }
+    },
+    'USE_SESSION_AUTH': False,
+}
+
+# BASE BACKEND URL:
+BASE_BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000/")
+# BASE_BACKEND_URL = "http://localhost:8000/"
+
 

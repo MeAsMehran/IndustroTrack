@@ -13,8 +13,10 @@ class DeviceTypeAdmin(admin.ModelAdmin):
 
 @admin.register(DeviceLog)
 class DeviceLogAdmin(admin.ModelAdmin):
-    list_display = ('device_id' ,'device_type', 'time', 'value')
+    list_display = ('id', 'device_id' ,'get_device_type', 'time', 'value')
 
+    def get_device_type(self, obj):
+        return ", ".join([dt.parameter for dt in obj.device_type.all()])
 
 @admin.register(Device)
 class DeviceAdmin(admin.ModelAdmin):

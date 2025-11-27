@@ -39,7 +39,7 @@ services:
       - redis
       - db
     environment:
-      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - ALLOWED_HOSTS=localhost,127.0.0.1,django
       - DEBUG=True
       - SECRET_KEY=django-insecure-qxgavaaum3gp9yf2ptl=cm^*)ey^)d^x9orc!j8oana9d1aq5x
 
@@ -69,6 +69,7 @@ services:
       - db
     environment:
       - ALLOWED_HOSTS=localhost,127.0.0.1,django
+      - BACKEND_URL=http://django:8000
       - DEBUG=True
       - SECRET_KEY=django-insecure-qxgavaaum3gp9yf2ptl=cm^*)ey^)d^x9orc!j8oana9d1aq5x
 
@@ -92,6 +93,7 @@ services:
       - redis
     environment:
       - ALLOWED_HOSTS=localhost,127.0.0.1,django
+      - BACKEND_URL=http://django:8000
       - DEBUG=True
       - SECRET_KEY=django-insecure-qxgavaaum3gp9yf2ptl=cm^*)ey^)d^x9orc!j8oana9d1aq5x
 

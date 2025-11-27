@@ -10,11 +10,23 @@ class DeviceTypeSerializer(serializers.ModelSerializer):
 
 
 class DeviceSerializer(serializers.ModelSerializer):
-    device_type = DeviceTypeSerializer(many=True, read_only=True)  # Add this line
+    device_type = serializers.StringRelatedField(many=True, read_only=True)
+
+    device_type_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=DeviceType.objects.all(),
+        write_only=True
+    )
 
     class Meta:
         model = Device
         fields = '__all__'
+
+    def create(self, validated_data):
+        device_type_ids = validated_data.pop('device_type_ids', [])
+        device = Device.objects.create(**validated_data)
+        device.device_type.set(device_type_ids)
+        return device
 
 
 
