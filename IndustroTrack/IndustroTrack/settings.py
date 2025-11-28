@@ -26,8 +26,8 @@ SECRET_KEY = 'django-insecure-qxgavaaum3gp9yf2ptl=cm^*)ey^)d^x9orc!j8oana9d1aq5x
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
-
+# ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # Application definition
 
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
     'drf_yasg',
 
     'machine.apps.MachineConfig',
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -91,7 +93,7 @@ DATABASES = {
         'NAME': os.getenv('DB_NAME', 'industro_track_db'),
         'USER': os.getenv('DB_USER', 'postgres'),
         'PASSWORD': os.getenv('DB_PASSWORD', 'admin'),
-        'HOST': os.getenv('DB_HOST', 'db'),  # MUST BE "db", not "localhost"
+        'HOST': os.getenv('DB_HOST', 'localhost'),  # MUST BE "db", not "localhost"
         'PORT': os.getenv('DB_PORT', '5432'),
     },
 }
@@ -148,6 +150,15 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# CORS HEADER CONFIG:
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
+
+
+# AUTH_USER:
+AUTH_USER_MODEL = 'account.CustomUser'
+
 
 # Celery Configuration Options
 CELERY_TIMEZONE = "Asia/Tehran"
@@ -182,7 +193,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://redis:6379/1',  # Use the appropriate Redis server URL
+        'LOCATION': 'redis://localhost:6379/1',  # Use the appropriate Redis server URL
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }

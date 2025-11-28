@@ -13,7 +13,6 @@ colorama==0.4.6
 cron_descriptor==2.0.6
 Django==5.2.8
 django-celery-beat==2.8.1
-django-phonenumber-field==8.4.0
 django-redis==6.0.0
 django-timezone-field==7.1
 djangorestframework==3.16.1
@@ -28,6 +27,7 @@ psycopg2-binary==2.9.11
 PyJWT==2.10.1
 python-crontab==3.3.0
 python-dateutil==2.9.0.post0
+python-dotenv==1.2.1
 pytz==2025.2
 PyYAML==6.0.3
 redis==7.1.0
