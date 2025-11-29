@@ -13,6 +13,9 @@ colorama==0.4.6
 cron_descriptor==2.0.6
 Django==5.2.8
 django-celery-beat==2.8.1
+django-cors-headers==4.9.0
+django-phone-verify==3.2.0
+django-phonenumber-field==8.3.0
 django-redis==6.0.0
 django-timezone-field==7.1
 djangorestframework==3.16.1
@@ -22,6 +25,8 @@ idna==3.11
 inflection==0.5.1
 kombu==5.5.4
 packaging==25.0
+phonenumbers==9.0.19
+phonenumberslite==9.0.17
 prompt_toolkit==3.0.52
 psycopg2-binary==2.9.11
 PyJWT==2.10.1
