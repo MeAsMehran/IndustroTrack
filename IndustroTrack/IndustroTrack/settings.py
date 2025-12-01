@@ -196,7 +196,7 @@ SWAGGER_SETTINGS = {
 }
 
 # BASE BACKEND URL:
-BASE_BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000/")
+# BASE_BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000/")
 # BASE_BACKEND_URL = "http://localhost:8000/"
 
 

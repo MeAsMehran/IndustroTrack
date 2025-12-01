@@ -29,11 +29,24 @@ class DeviceSerializer(serializers.ModelSerializer):
         return device
 
 
-
 class DeviceLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceLog
         fields = '__all__'
+
+
+# For PUT request method
+class DeviceUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Device
+        fields = '__all__'
+
+
+class DeviceTypeUpdateSerializer(serializers.ModelSerializer):
+        
+        class Meta:
+            model = DeviceType
+            fields = ('parameter', 'code', 'des')
 
 
 class DeviceTypeOutputSerializer(serializers.Serializer):
