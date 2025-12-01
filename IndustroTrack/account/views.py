@@ -1,4 +1,5 @@
-from drf_yasg.utils import swagger_auto_schema
+from http.cookiejar import Cookie
+
 from django.shortcuts import render
 from rest_framework import status
 from rest_framework.exceptions import AuthenticationFailed
@@ -13,7 +14,6 @@ import jwt, datetime
 class UserRegisterAPIView(APIView):
     serializer_class = CustomUserRegisterSerializer
 
-    @swagger_auto_schema(request_body=CustomUserRegisterSerializer)
     def post(self, request):
         serializer = CustomUserRegisterSerializer(data=request.data)
         if serializer.is_valid():
@@ -24,7 +24,6 @@ class UserRegisterAPIView(APIView):
 class UserLoginAPIView(APIView):
     serializer_class = CustomUserLoginSerializer
 
-    @swagger_auto_schema(request_body=CustomUserLoginSerializer)
     def post(self, request):
         phone_number = request.data.get('phone_number')
         password = request.data.get('password')
@@ -79,7 +78,7 @@ class UserView(APIView):
 
 class LogoutView(APIView):
 
-    def post(self, request):
+    def post(self,request):
         response = Response()
         response.delete_cookie(key='jwt')
         response.data = {
