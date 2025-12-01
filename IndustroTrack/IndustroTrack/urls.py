@@ -18,11 +18,6 @@ from django.contrib import admin
 from django.urls import path, include
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-    TokenVerifyView,
-)
 
 
 schema_view = get_schema_view(
@@ -35,10 +30,16 @@ schema_view = get_schema_view(
 
 urlpatterns = [
 
-    # APP api:
+    # admin urls:
     path('admin/', admin.site.urls),
-    path('api/machine/', include('machine.urls')),
-    path('api/user/', include('account.urls')),
+
+    # account urls:
+    path('device/', include('machine.urls.device_urls')),
+    path('device_type/', include('machine.urls.device_type_urls')),
+    path('device_log/', include('machine.urls.device_log_urls')),
+
+    # machine urls:
+    path('user/', include('account.urls')),
 
     # JWT api:
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -47,7 +48,5 @@ urlpatterns = [
 
     # DRF api:
     path('api-auth/', include('rest_framework.urls')),
-
-    # Swagger api:
     path('swagger/', schema_view.with_ui('swagger',cache_timeout=0), name='schema-swagger-ui'),
 ]
