@@ -28,6 +28,12 @@ schema_view = get_schema_view(
         public=True,
     )
 
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+    TokenVerifyView,
+)
+
 urlpatterns = [
 
     # admin urls:

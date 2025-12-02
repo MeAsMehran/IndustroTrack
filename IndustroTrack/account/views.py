@@ -1,19 +1,23 @@
 from http.cookiejar import Cookie
-
 from django.shortcuts import render
 from rest_framework import status
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
-from .serializers import CustomUserRegisterSerializer, CustomUserLoginSerializer
+from .serializers import CustomUserRegisterSerializer, CustomUserLoginSerializer, UserSerializer
 from rest_framework.response import Response
 from .models import CustomUser
 import jwt, datetime
+from drf_yasg.utils import swagger_auto_schema
+
 
 # Create your views here.
 
 class UserRegisterAPIView(APIView):
     serializer_class = CustomUserRegisterSerializer
 
+
+    @swagger_auto_schema(request_body=CustomUserRegisterSerializer)
     def post(self, request):
         serializer = CustomUserRegisterSerializer(data=request.data)
         if serializer.is_valid():
@@ -24,6 +28,7 @@ class UserRegisterAPIView(APIView):
 class UserLoginAPIView(APIView):
     serializer_class = CustomUserLoginSerializer
 
+    @swagger_auto_schema(request_body=CustomUserLoginSerializer)
     def post(self, request):
         phone_number = request.data.get('phone_number')
         password = request.data.get('password')
@@ -87,5 +92,7 @@ class LogoutView(APIView):
         return response
 
 
-
+class UserListsView(ListAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = UserSerializer
 
