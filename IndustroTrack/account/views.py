@@ -10,7 +10,6 @@ from .models import CustomUser
 import jwt, datetime
 from drf_yasg.utils import swagger_auto_schema
 
-
 # Create your views here.
 
 class UserRegisterAPIView(APIView):
@@ -22,7 +21,7 @@ class UserRegisterAPIView(APIView):
         serializer = CustomUserRegisterSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class UserLoginAPIView(APIView):
@@ -40,25 +39,40 @@ class UserLoginAPIView(APIView):
 
         if not user.check_password(password):
             raise AuthenticationFailed('Invalid password!')
-
-        payload = {
+        
+        # Access Token 
+        access_payload = {
             'id': user.id,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
             'iat': datetime.datetime.utcnow(),
         }
 
-        # CREATING THE TOKEN:
+        # CREATING THE ACCESS_TOKEN:
         # token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256').decode('utf-8')
-        token = jwt.encode(payload, 'secret', algorithm='HS256')
+        access_token = jwt.encode(access_payload, 'secret', algorithm='HS256')
+
+        # Refresh Token 
+        refresh_payload = {
+            'id': user.id,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7),
+            'iat': datetime.datetime.utcnow(),
+        }
+
+        # CREATING THE REFRESH_TOKEN:
+        refresh_token = jwt.encode(refresh_payload, 'secret', algorithm='HS256')
 
         # MAKING A COOKIE
         response = Response()
-        response.set_cookie(key='jwt', value=token, httponly=True)
+        response.set_cookie(key='jwt', value=access_token, httponly=True)
         response.data = {
-            'token': token,
+            'access_token': access_token,
+            'refresh_token': refresh_token,
         }
 
-        return response
+        return {
+            'response' : response,
+            'status' : 200
+        }
 
 
 class UserView(APIView):

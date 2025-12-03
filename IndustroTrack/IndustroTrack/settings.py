@@ -41,8 +41,13 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'rest_framework_simplejwt',
+    "phonenumber_field",
     'corsheaders',
     'drf_yasg',
+
+    # validate password
+    'django_password_validators',
+    'django_password_validators.password_history',
 
     'machine.apps.MachineConfig',
     'account.apps.AccountConfig',
@@ -113,17 +118,29 @@ REST_FRAMEWORK = {
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
+
+        # This is for unique password
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME': 'django_password_validators.password_history.password_validation.UniquePasswordsValidator',
+        'OPTIONS': {
+             # How many recently entered passwords matter.
+             # Passwords out of range are deleted.
+             # Default: 0 - All passwords entered by the user. All password hashes are stored.
+            'last_passwords': 5 # Only the last 5 passwords entered by the user
+        }
     },
+
+        # Password Character Validator
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'NAME': 'django_password_validators.password_character_requirements.password_validation.PasswordCharacterValidator',
+        'OPTIONS': {
+             'min_length_digit': 1,
+             'min_length_alpha': 2,
+             'min_length_special': 3,
+             'min_length_lower': 4,
+             'min_length_upper': 5,
+             'special_characters': "~!@#$%^&*()_+{}\":;'[]"
+         }
     },
 ]
 
@@ -193,7 +210,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://localhost:6379/1',  # Use the appropriate Redis server URL
+        'LOCATION': 'redis://redis:6379/1',  # Use the appropriate Redis server URL
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }
