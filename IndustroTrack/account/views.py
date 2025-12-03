@@ -1,14 +1,13 @@
-from http.cookiejar import Cookie
-from django.shortcuts import render
 from rest_framework import status
-from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
 from .serializers import CustomUserRegisterSerializer, CustomUserLoginSerializer, UserSerializer
 from rest_framework.response import Response
 from .models import CustomUser
-import jwt, datetime
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # Create your views here.
 
@@ -29,81 +28,35 @@ class UserLoginAPIView(APIView):
 
     @swagger_auto_schema(request_body=CustomUserLoginSerializer)
     def post(self, request):
-        phone_number = request.data.get('phone_number')
-        password = request.data.get('password')
 
-        user = CustomUser.objects.filter(phone_number=phone_number).first()
-
-        if user is None:
-            raise AuthenticationFailed('User Not Found!')
-
-        if not user.check_password(password):
-            raise AuthenticationFailed('Invalid password!')
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            return Response(serializer.data, status=status.HTTP_200_OK)
         
-        # Access Token 
-        access_payload = {
-            'id': user.id,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
-            'iat': datetime.datetime.utcnow(),
-        }
-
-        # CREATING THE ACCESS_TOKEN:
-        # token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256').decode('utf-8')
-        access_token = jwt.encode(access_payload, 'secret', algorithm='HS256')
-
-        # Refresh Token 
-        refresh_payload = {
-            'id': user.id,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7),
-            'iat': datetime.datetime.utcnow(),
-        }
-
-        # CREATING THE REFRESH_TOKEN:
-        refresh_token = jwt.encode(refresh_payload, 'secret', algorithm='HS256')
-
-        # MAKING A COOKIE
-        response = Response()
-        response.set_cookie(key='jwt', value=access_token, httponly=True)
-        response.data = {
-            'access_token': access_token,
-            'refresh_token': refresh_token,
-        }
-
-        return {
-            'response' : response,
-            'status' : 200
-        }
+        return Response(serializer.validated_data, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserView(APIView):
 
-    def get(self,request):
-        token = request.COOKIES.get('jwt')
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
-        if not token:
-            raise AuthenticationFailed('Unauthenticated!')
-
-        try:
-            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('Unauthenticated!')
-
-        user = CustomUser.objects.filter(id=payload['id']).first()
-        serializer = CustomUserLoginSerializer(user)
-
-
+    def get(self, request):
+        user = request.user
+        serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
 
-    def post(self,request):
-        response = Response()
-        response.delete_cookie(key='jwt')
-        response.data = {
-            'message': 'Successfully logged out',
-        }
-        return response
+    def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh")
+            token = RefreshToken(refresh_token)
+            return Response({"message": "Successfully logged out"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserListsView(ListAPIView):
