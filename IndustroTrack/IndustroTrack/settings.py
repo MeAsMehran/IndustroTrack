@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -41,13 +42,14 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'rest_framework_simplejwt',
-    "phonenumber_field",
+    'rest_framework_simplejwt.token_blacklist',
+    'phonenumber_field',
     'corsheaders',
     'drf_yasg',
 
     # validate password
-    'django_password_validators',
-    'django_password_validators.password_history',
+    # 'django_password_validators',
+    # 'django_password_validators.password_history',
 
     'machine.apps.MachineConfig',
     'account.apps.AccountConfig',
@@ -111,43 +113,34 @@ REST_FRAMEWORK = {
     )
 }
 
+# JWT 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=10),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True, 
+}
+
 
 
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
+
 AUTH_PASSWORD_VALIDATORS = [
-
-        # This is for unique password
     {
-        'NAME': 'django_password_validators.password_history.password_validation.UniquePasswordsValidator',
-        'OPTIONS': {
-             # How many recently entered passwords matter.
-             # Passwords out of range are deleted.
-             # Default: 0 - All passwords entered by the user. All password hashes are stored.
-            'last_passwords': 5 # Only the last 5 passwords entered by the user
-        }
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
-
-        # Password Character Validator
-    {
-        'NAME': 'django_password_validators.password_character_requirements.password_validation.PasswordCharacterValidator',
-        'OPTIONS': {
-            'min_length_digit': 1, 
-            'min_length_lower': 1,
-            'min_length_upper': 1,
-            'min_length_alpha': 0,
-            'min_length_special': 0,
-        }
-    },
-
-        # minimum length
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {
-            'min_length': 4, 
-        }
+        'OPTIONS': {'min_length': 4}
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
 

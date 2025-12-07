@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Device, DeviceLog, DeviceType
 from django.utils import timezone
+from .validations.validate_data import validate_data
 
 
 
@@ -8,7 +9,7 @@ class DeviceTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceType
         fields = '__all__'
-
+        
 
 class DeviceSerializer(serializers.ModelSerializer):
     device_type = serializers.StringRelatedField(many=True, read_only=True)
@@ -18,7 +19,6 @@ class DeviceSerializer(serializers.ModelSerializer):
         queryset=DeviceType.objects.all(),
         write_only=True
     )
-
     class Meta:
         model = Device
         fields = '__all__'
@@ -30,12 +30,23 @@ class DeviceSerializer(serializers.ModelSerializer):
         return device
 
 
-class DeviceLogSerializer(serializers.Serializer):
+class DeviceLogCreateSerializer(serializers.Serializer):
+    
+    device_id = serializers.CharField()
+    device_type_id = serializers.CharField()
+    value = serializers.FloatField()
+    time = serializers.DateTimeField(default=0)
+    class Meta:
+        modle = DeviceLog
+        fields = ('device_id', 'device_type_id', 'value', 'time')
+
+
+class DeviceLogListSerializer(serializers.Serializer):
 
     device_ids = serializers.ListField(
         child=serializers.IntegerField(), 
-        allow_empty=True,
-        required=False
+        allow_empty=False,
+        required=True,
     )
     device_type_ids = serializers.ListField(
         child=serializers.IntegerField(),
@@ -47,6 +58,16 @@ class DeviceLogSerializer(serializers.Serializer):
 
     class Meta:
         fields = ('device_ids', 'device_type_ids', 'start_date', 'end_date')
+
+
+class ReceiveDataSerializer(serializers.Serializer):
+    device = serializers.CharField(required=True)
+    device_type = serializers.CharField(required=True)
+    value = serializers.FloatField(default=0)
+    time = serializers.DateTimeField()
+
+    class Meta:
+        fields = ('device', 'device_type', 'value', 'time')
 
 
 class DeviceNestedSerializer(serializers.ModelSerializer):
@@ -85,26 +106,11 @@ class DeviceTypeUpdateSerializer(serializers.ModelSerializer):
             model = DeviceType
             fields = ('parameter', 'code', 'des')
 
-
-class DeviceTypeOutputSerializer(serializers.Serializer):
-
-    class Meta:
-        model = DeviceType
-        fields = ('parameter', 'code')
+        def validate(self, data):
+            return validate_data(data)
 
 
-class DeviceOutputSerializer(serializers.Serializer):
-    device_type = DeviceTypeOutputSerializer(many=True) 
-
-    class Meta:
-        model = Device
-        fields = ('code', 'name', 'device_type')
 
 
-class DataSerializerSerializer(serializers.Serializer):
-    machine_code = serializers.CharField()
-    machine_name = serializers.CharField()
-    device_type = DeviceTypeSerializer(many=True)
 
-    class Meta:
-        fields = ('machine_code', 'machine_name', 'device_type')
+
