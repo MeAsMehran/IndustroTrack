@@ -10,7 +10,8 @@ DeviceTypeUpdateSerializer, DeviceLogOutputSerializer, DeviceLogCreateSerializer
 from .models import Device
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from django.db.models import Q
+from .paginations import DeviceLogPagination
+from rest_framework import serializers
 
 # Create your views here.
 
@@ -138,29 +139,32 @@ class DetailDeviceLog(RetrieveAPIView):
     lookup_field = 'id'
 
 
-def parse_int_list(raw_value):
-    """
-    Convert comma-separated list string into list of ints.
-    Example: "1,2,3" → [1, 2, 3]
-    """
-    if not raw_value:
-        return None
-
-    parts = raw_value.split(',')
-    try:
-        return [int(x.strip()) for x in parts if x.strip() != ""]
-    except ValueError:
-        raise serializers.ValidationError("Must be comma-separated integers, e.g. 1,2,3")
-        
+       
 
 from .query.device_log_filter import dev_log_filter
 class ListDeviceLog(ListAPIView):
     model = DeviceLog
     serializer_class = DeviceLogListSerializer
+    pagination_class = DeviceLogPagination
 
     def setup(self, request, *args, **kwargs):
         self.device_logs = self.model.objects.all()
         return super().setup(request, *args, **kwargs)
+
+    def parse_int_list(self, raw_value):
+        """
+        Convert comma-separated list string into list of ints.
+        Example: "1,2,3" → [1, 2, 3]
+        """
+        if not raw_value:
+            return None
+
+        parts = raw_value.split(',')
+        try:
+            return [int(x.strip()) for x in parts if x.strip() != ""]
+        except ValueError:
+            raise serializers.ValidationError("Must be comma-separated integers, e.g. 1,2,3")
+ 
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -207,58 +211,62 @@ class ListDeviceLog(ListAPIView):
                 required=False
             ),
             openapi.Parameter(
-                name='pagination',
+                name='page_size',
                 in_=openapi.IN_QUERY,
                 description='Return the number of the records each request or page',
+                type=openapi.TYPE_STRING,
+                required=False
+            ),
+            openapi.Parameter(
+                name='page_number',
+                in_=openapi.IN_QUERY,
+                description='Page number for pagination',
                 type=openapi.TYPE_STRING,
                 required=False
             ),
         ]
     )
 
+    
     def get(self, request):
-        
-        # --- Parse lists ---
         try:
-            device_ids = parse_int_list(request.GET.get("device_ids"))
-            device_type_ids = parse_int_list(request.GET.get("device_type_ids"))
+            device_ids = self.parse_int_list(request.GET.get("device_ids"))
+            device_type_ids = self.parse_int_list(request.GET.get("device_type_ids"))
         except serializers.ValidationError as exc:
             return Response({"detail": str(exc)}, status=400)
 
-        # --- Build serializer input ---
+        # Build serializer params
         query_params = {
             "device_ids": device_ids,
             "device_type_ids": device_type_ids or [],
             "start_date": request.GET.get("start_date"),
             "end_date": request.GET.get("end_date"),
-            "order_by": request.GET.get('order_by'),
-            'latest': request.GET.get('latest'),
-            "pagination": request.GET.get('pagination'),
-            "search": request.GET.get('search'),
-        } 
+            "order_by": request.GET.get("order_by"),
+            "search": request.GET.get("search"),
+            "page_number": request.GET.get("page_number"),
+            "page_size": request.GET.get("page_size"),
+        }
 
-        # Validate with serializer
         serializer = self.serializer_class(data=query_params)
 
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-        # receive the serialized params
-        validated_params = serializer.data
+            return response(serializer.errors, status=status.http_400_bad_request)
+     
+        validated_params = serializer.validated_data
 
-        # get the queryset
-        device_logs_query = dev_log_filter(validated_params)
+        # Filter queryset
+        queryset = dev_log_filter(validated_params)
 
-        # paginations:
-        # .get(): Check if a parameter exists and is not empty: This returns False for -> None, [], "", 0
-        if validated_params.get('pagination'):
-            page_size = validated_params.get('pagination')
-            device_logs_query = device_logs_query[:page_size]
+        # Apply pagination
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request)
 
-        output = DeviceLogOutputSerializer(device_logs_query, many=True)
-        
-        return Response({'data' : output.data}, status=status.HTTP_200_OK)
-        # return Response({'device_logs_avg_value' : avg_value["avg_value"], 'data' : output.data}, status=status.HTTP_200_OK)
+        if page is not None:
+            output = DeviceLogOutputSerializer(page, many=True)
+            return paginator.get_paginated_response(output.data)
+
+        output = DeviceLogOutputSerializer(queryset, many=True)
+        return Response({"data": output.data})
 
 
 class ReceiveData(CreateAPIView):
@@ -268,12 +276,5 @@ class ReceiveData(CreateAPIView):
 
 
                 
-
-
-
-
-
-
-
-
+   
 
