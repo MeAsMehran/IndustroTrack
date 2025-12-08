@@ -52,7 +52,7 @@ def dev_log_filter(params):
             Q(device_type__parameter__icontains=search)
         )) or Q())
     ).order_by(
-        *((order_by and (f"-{order_by}",)) or ())
+        *((order_by and (f"{order_by}",)) or ())
     )
 
     # filtered_device_logs = device_logs.filter(our_filter)
