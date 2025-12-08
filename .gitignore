@@ -103,3 +103,9 @@ IndustroTrack/machine/migrations/
 IndustroTrack/celerybeat-schedule
 
 IndustroTrack/machine/utils/create_info.py
+
+# celery beat:
+celerybeat-schedule
+
+
+
