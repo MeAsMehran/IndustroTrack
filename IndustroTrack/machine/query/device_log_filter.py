@@ -13,7 +13,6 @@ def dev_log_filter(params):
     device_type_ids = params.get('device_type_ids')
     order_by = params.get('order_by')
     latest = params.get('latest')
-    paginations = params.get('paginations')
     search = params.get('search')
 
 
