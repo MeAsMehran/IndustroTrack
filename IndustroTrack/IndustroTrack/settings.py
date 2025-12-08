@@ -26,8 +26,8 @@ SECRET_KEY = 'django-insecure-qxgavaaum3gp9yf2ptl=cm^*)ey^)d^x9orc!j8oana9d1aq5x
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
-
+# ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # Application definition
 
@@ -40,13 +40,23 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'rest_framework_simplejwt',
+    "phonenumber_field",
+    'corsheaders',
     'drf_yasg',
 
+    # validate password
+    'django_password_validators',
+    'django_password_validators.password_history',
+
     'machine.apps.MachineConfig',
+    'account.apps.AccountConfig',
+
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -88,9 +98,17 @@ DATABASES = {
         'NAME': os.getenv('DB_NAME', 'industro_track_db'),
         'USER': os.getenv('DB_USER', 'postgres'),
         'PASSWORD': os.getenv('DB_PASSWORD', 'admin'),
-        'HOST': os.getenv('DB_HOST', 'db'),  # MUST BE "db", not "localhost"
+        'HOST': os.getenv('DB_HOST', 'localhost'),  # MUST BE "db", not "localhost"
         'PORT': os.getenv('DB_PORT', '5432'),
     },
+}
+
+
+# DJANGO REST FRAME WORK CONFIG:
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
 }
 
 
@@ -100,17 +118,36 @@ DATABASES = {
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
+
+        # This is for unique password
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME': 'django_password_validators.password_history.password_validation.UniquePasswordsValidator',
+        'OPTIONS': {
+             # How many recently entered passwords matter.
+             # Passwords out of range are deleted.
+             # Default: 0 - All passwords entered by the user. All password hashes are stored.
+            'last_passwords': 5 # Only the last 5 passwords entered by the user
+        }
     },
+
+        # Password Character Validator
+    {
+        'NAME': 'django_password_validators.password_character_requirements.password_validation.PasswordCharacterValidator',
+        'OPTIONS': {
+            'min_length_digit': 1, 
+            'min_length_lower': 1,
+            'min_length_upper': 1,
+            'min_length_alpha': 0,
+            'min_length_special': 0,
+        }
+    },
+
+        # minimum length
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'OPTIONS': {
+            'min_length': 4, 
+        }
     },
 ]
 
@@ -136,6 +173,15 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# CORS HEADER CONFIG:
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
+
+
+# AUTH_USER:
+AUTH_USER_MODEL = 'account.CustomUser'
 
 
 # Celery Configuration Options
@@ -196,7 +242,7 @@ SWAGGER_SETTINGS = {
 }
 
 # BASE BACKEND URL:
-BASE_BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000/")
+# BASE_BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000/")
 # BASE_BACKEND_URL = "http://localhost:8000/"
 
 

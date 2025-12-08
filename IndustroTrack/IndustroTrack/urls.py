@@ -28,10 +28,31 @@ schema_view = get_schema_view(
         public=True,
     )
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/machine/', include('machine.urls')),
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+    TokenVerifyView,
+)
 
+urlpatterns = [
+
+    # admin urls:
+    path('admin/', admin.site.urls),
+
+    # account urls:
+    path('device/', include('machine.urls.device_urls')),
+    path('device_type/', include('machine.urls.device_type_urls')),
+    path('device_log/', include('machine.urls.device_log_urls')),
+
+    # machine urls:
+    path('user/', include('account.urls')),
+
+    # JWT api:
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+
+    # DRF api:
     path('api-auth/', include('rest_framework.urls')),
     path('swagger/', schema_view.with_ui('swagger',cache_timeout=0), name='schema-swagger-ui'),
 ]

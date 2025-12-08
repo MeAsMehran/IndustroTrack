@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Device, DeviceLog, DeviceType
+from django.utils import timezone
 
 
 
@@ -29,11 +30,60 @@ class DeviceSerializer(serializers.ModelSerializer):
         return device
 
 
+class DeviceLogSerializer(serializers.Serializer):
 
-class DeviceLogSerializer(serializers.ModelSerializer):
+    device_ids = serializers.ListField(
+        child=serializers.IntegerField(), 
+        allow_empty=True,
+        required=False
+    )
+    device_type_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        allow_empty=True,
+        required=False
+    )
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
+
     class Meta:
-        model = DeviceLog
+        fields = ('device_ids', 'device_type_ids', 'start_date', 'end_date')
+
+
+class DeviceNestedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Device
+        fields = ('id', 'name')
+
+
+class DeviceTypeNestedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeviceType
+        fields = ('id', 'parameter')
+
+
+class DeviceLogOutputSerializer(serializers.Serializer):
+
+    device = DeviceNestedSerializer()
+    device_type = DeviceTypeNestedSerializer()
+    time = serializers.DateTimeField()
+    value = serializers.FloatField()
+
+    class Meta:
+        fields = ('id', 'device', 'device_type', 'time', 'value')
+
+
+# For PUT request method
+class DeviceUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Device
         fields = '__all__'
+
+
+class DeviceTypeUpdateSerializer(serializers.ModelSerializer):
+        
+        class Meta:
+            model = DeviceType
+            fields = ('parameter', 'code', 'des')
 
 
 class DeviceTypeOutputSerializer(serializers.Serializer):
