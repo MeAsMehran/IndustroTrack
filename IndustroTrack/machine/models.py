@@ -19,7 +19,7 @@ class Device(models.Model):
     name = models.CharField(max_length=100)
     code = models.CharField(unique=True)
     des = models.CharField(max_length=250, blank=True, null=True, verbose_name='description')
-    device_type = models.ManyToManyField(DeviceType,)
+    device_type = models.ManyToManyField(DeviceType, related_name='device_types')
 
     def __str__(self) -> str:
         return str(self.name)

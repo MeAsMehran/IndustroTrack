@@ -10,6 +10,7 @@ DeviceTypeUpdateSerializer, DeviceLogOutputSerializer, DeviceLogCreateSerializer
 from .models import Device
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from django.db.models import Q
 
 # Create your views here.
 
@@ -17,7 +18,6 @@ class CreateDevice(CreateAPIView):
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
-
 
 
 class ListDevice(ListAPIView):
@@ -153,18 +153,14 @@ def parse_int_list(raw_value):
         raise serializers.ValidationError("Must be comma-separated integers, e.g. 1,2,3")
         
 
-
+from .query.device_log_filter import dev_log_filter
 class ListDeviceLog(ListAPIView):
     model = DeviceLog
     serializer_class = DeviceLogListSerializer
-    # permission_classes = [IsAuthenticated, IsAdminUser]
 
     def setup(self, request, *args, **kwargs):
-
         self.device_logs = self.model.objects.all()
         return super().setup(request, *args, **kwargs)
-
-
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -187,14 +183,35 @@ class ListDeviceLog(ListAPIView):
                 in_=openapi.IN_QUERY,
                 description='Start date (ISO8601). Example: 2025-01-01T00:00:00',
                 type=openapi.TYPE_STRING,
-                required=True
+                required=False
             ),
             openapi.Parameter(
                 name='end_date',
                 in_=openapi.IN_QUERY,
                 description='End date (ISO8601). Example: 2025-06-01T00:00:00',
                 type=openapi.TYPE_STRING,
-                required=True
+                required=False
+            ),
+            openapi.Parameter(
+                name='order_by',
+                in_=openapi.IN_QUERY,
+                description='Order By',
+                type=openapi.TYPE_STRING,
+                required=False
+            ),
+            openapi.Parameter(
+                name='latest',
+                in_=openapi.IN_QUERY,
+                description='End date (ISO8601). Example: 2025-06-01T00:00:00',
+                type=openapi.TYPE_STRING,
+                required=False
+            ),
+            openapi.Parameter(
+                name='search',
+                in_=openapi.IN_QUERY,
+                description='End date (ISO8601). Example: 2025-06-01T00:00:00',
+                type=openapi.TYPE_STRING,
+                required=False
             ),
         ]
     )
@@ -214,54 +231,48 @@ class ListDeviceLog(ListAPIView):
             "device_type_ids": device_type_ids or [],
             "start_date": request.GET.get("start_date"),
             "end_date": request.GET.get("end_date"),
-        }        # Copy date values (these are already OK)
-
-        query_params['start_date'] = request.GET.get('start_date')
-        query_params['end_date'] = request.GET.get('end_date')
+            "order_by": request.GET.get('order_by'),
+            'latest': request.GET.get('latest'),
+            "pagination": request.GET.get('pagination'),
+            "search": request.GET.get('search'),
+        } 
 
         # Validate with serializer
         serializer = self.serializer_class(data=query_params)
+
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+        # receive the serialized params
+        validated_params = serializer.data
 
-        start_date = serializer.validated_data['start_date']    # works fine i checked it
-        end_date = serializer.validated_data['end_date']        # works fine i checked it
-        device_ids = serializer.validated_data.get('device_ids')
-        device_type_ids = serializer.validated_data.get('device_type_ids')
+        # get the queryset
+        device_logs_query = dev_log_filter(validated_params)
 
+        # paginations:
+        # .get(): Check if a parameter exists and is not empty: This returns False for -> None, [], "", 0
+        if validated_params.get('pagination'):
+            page_size = validated_params
+            query = device_logs_query[:page_size]
+
+        output = DeviceLogOutputSerializer(device_logs_query, many=True)
         
-        if device_type_ids:
-            filtered_device_logs = self.device_logs.filter(
-            time__range=(start_date, end_date),
-            device_id__in=device_ids,
-            device_type_id__in=device_type_ids,
-        ).order_by('time')
-        else:
-            filtered_device_logs = self.device_logs.filter(
-            time__range=(start_date, end_date),
-            device_id__in=device_ids,
-        ).order_by('time')
-        
-        output = DeviceLogOutputSerializer(filtered_device_logs, many=True)
-        avg_value = filtered_device_logs.aggregate(avg_value=Avg('value'))
-
-        return Response({'device_logs_avg_value' : avg_value["avg_value"], 'data' : output.data}, status=status.HTTP_200_OK)
-
+        return Response({'data' : output.data}, status=status.HTTP_200_OK)
+        # return Response({'device_logs_avg_value' : avg_value["avg_value"], 'data' : output.data}, status=status.HTTP_200_OK)
 
 class ReceiveData(CreateAPIView):
-    serializers_class = ReceiveDataSerializer 
+    serializer_class = ReceiveDataSerializer 
     model = DeviceLog
     queryset = DeviceLog.objects.all()
 
-    # permission_classes = [IsAuthenticated, IsAdminUser]
-    # serializer_class = DeviceLogCreateSerializer
 
-    # @swagger_auto_schema(request_body=ReceiveDataSerializer)
-    # def post(self, request):
-    #     serializer = self.serializers_class(data=request.data)
-    #     serializer.is_valid():
-            
-            
+                
+
+
+
+
+
+
 
 
 

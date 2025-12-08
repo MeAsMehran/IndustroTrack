@@ -41,7 +41,7 @@ class DeviceLogCreateSerializer(serializers.Serializer):
         fields = ('device_id', 'device_type_id', 'value', 'time')
 
 
-class DeviceLogListSerializer(serializers.Serializer):
+class DeviceLogListSerializer(serializers.ModelSerializer):
 
     device_ids = serializers.ListField(
         child=serializers.IntegerField(), 
@@ -53,11 +53,18 @@ class DeviceLogListSerializer(serializers.Serializer):
         allow_empty=True,
         required=False
     )
-    start_date = serializers.DateTimeField()
-    end_date = serializers.DateTimeField()
+
+    pagination = serializers.IntegerField(required=False, allow_null=True)
+    order_by = serializers.CharField(required=False, allow_null=True)
+    latest = serializers.BooleanField(required=False, allow_null=True)
+    search = serializers.CharField(required=False, allow_null=True)
+
+    start_date = serializers.DateTimeField(required=False, allow_null=True)
+    end_date = serializers.DateTimeField(required=False, allow_null=True)
 
     class Meta:
-        fields = ('device_ids', 'device_type_ids', 'start_date', 'end_date')
+        model = DeviceLog
+        fields = ('device_ids', 'device_type_ids', 'pagination', 'order_by', 'latest','search','start_date', 'end_date')
 
 
 class ReceiveDataSerializer(serializers.Serializer):
@@ -66,8 +73,11 @@ class ReceiveDataSerializer(serializers.Serializer):
     value = serializers.FloatField(default=0)
     time = serializers.DateTimeField()
 
-    class Meta:
-        fields = ('device', 'device_type', 'value', 'time')
+    def validate(self, attrs):
+        return validate_data(attrs)
+
+    def create(self, validated_data):
+        return DeviceLog.objects.create(**validated_data)
 
 
 class DeviceNestedSerializer(serializers.ModelSerializer):
