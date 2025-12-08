@@ -54,16 +54,18 @@ class DeviceLogListSerializer(serializers.ModelSerializer):
         required=False
     )
 
-    pagination = serializers.IntegerField(required=False, allow_null=True)
-    order_by = serializers.CharField(required=False, allow_null=True)
-    search = serializers.CharField(required=False, allow_null=True)
-
     start_date = serializers.DateTimeField(required=False, allow_null=True)
     end_date = serializers.DateTimeField(required=False, allow_null=True)
 
+    order_by = serializers.CharField(required=False, allow_null=True)
+    search = serializers.CharField(required=False, allow_null=True)
+
+    page_size = serializers.IntegerField(required=False, allow_null=True)
+    page_number = serializers.IntegerField(required=False, allow_null=True)
+
     class Meta:
         model = DeviceLog
-        fields = ('device_ids', 'device_type_ids', 'pagination', 'order_by','search','start_date', 'end_date')
+        fields = ('device_ids', 'device_type_ids', 'page_size', 'page_number','order_by','search','start_date', 'end_date')
 
 
 class ReceiveDataSerializer(serializers.Serializer):
