@@ -1,19 +1,31 @@
+# drf:
+from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
-from .serializers import CustomUserRegisterSerializer, CustomUserLoginSerializer, UserSerializer
-from rest_framework.response import Response
-from .models import CustomUser
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from drf_yasg.utils import swagger_auto_schema
+
+# models:
+from .models import CustomUser
+
+# Tokens:
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
+
+# permissions:
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from .permissions.is_super_user import IsSuperUser
+
+# Serializers:
+from .serializers import CustomUserRegisterSerializer, CustomUserLoginSerializer, UserSerializer, CustomUserLogoutSerializer
+
 
 # Create your views here.
 
 class UserRegisterAPIView(APIView):
+    
     serializer_class = CustomUserRegisterSerializer
-
 
     @swagger_auto_schema(request_body=CustomUserRegisterSerializer)
     def post(self, request):
@@ -21,6 +33,7 @@ class UserRegisterAPIView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserLoginAPIView(APIView):
@@ -33,7 +46,7 @@ class UserLoginAPIView(APIView):
         if serializer.is_valid():
             return Response(serializer.data, status=status.HTTP_200_OK)
         
-        return Response(serializer.validated_data, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserView(APIView):
@@ -51,15 +64,22 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        
+        refresh_token = request.data.get("refresh")
+
+        if not refresh_token:
+            return Response({"detail": "Refresh token is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
-            refresh_token = request.data.get("refresh")
             token = RefreshToken(refresh_token)
-            return Response({"message": "Successfully logged out"}, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            token.blacklist()  # This will invalidate the token
+            return Response({"detail": "Logout successful."}, status=status.HTTP_205_RESET_CONTENT)
+        except TokenError:
+            return Response({"detail": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserListsView(ListAPIView):
+    permission_class = [IsAuthenticated]
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
 
