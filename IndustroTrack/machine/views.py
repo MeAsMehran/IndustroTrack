@@ -200,16 +200,16 @@ class ListDeviceLog(ListAPIView):
                 required=False
             ),
             openapi.Parameter(
-                name='latest',
+                name='search',
                 in_=openapi.IN_QUERY,
-                description='End date (ISO8601). Example: 2025-06-01T00:00:00',
+                description='search from the fields: device_name, parameter_name',
                 type=openapi.TYPE_STRING,
                 required=False
             ),
             openapi.Parameter(
-                name='search',
+                name='pagination',
                 in_=openapi.IN_QUERY,
-                description='End date (ISO8601). Example: 2025-06-01T00:00:00',
+                description='Return the number of the records each request or page',
                 type=openapi.TYPE_STRING,
                 required=False
             ),
@@ -252,13 +252,14 @@ class ListDeviceLog(ListAPIView):
         # paginations:
         # .get(): Check if a parameter exists and is not empty: This returns False for -> None, [], "", 0
         if validated_params.get('pagination'):
-            page_size = validated_params
-            query = device_logs_query[:page_size]
+            page_size = validated_params.get('pagination')
+            device_logs_query = device_logs_query[:page_size]
 
         output = DeviceLogOutputSerializer(device_logs_query, many=True)
         
         return Response({'data' : output.data}, status=status.HTTP_200_OK)
         # return Response({'device_logs_avg_value' : avg_value["avg_value"], 'data' : output.data}, status=status.HTTP_200_OK)
+
 
 class ReceiveData(CreateAPIView):
     serializer_class = ReceiveDataSerializer 
