@@ -42,12 +42,15 @@ def dev_log_filter(params):
     #     our_filter = our_filter & (Q(device__name__icontains=search) |
     #                                Q(device_type__parameter__icontains=search))
 
+    
     filtered_device_logs = device_logs.filter(
-        Q(time__range=(start_date, end_date)) &
+        Q(time__range=(start_date, end_date)) & 
         Q(device_id__in=device_ids) &
-        Q(device_type_id__in=(device_type_ids or [])) &
-        ((search and (Q(device__name__icontains=search) |
-                      Q(device_type__parameter__icontains=search))) or Q())
+        ((device_type_ids and Q(device_type_id__in=device_type_ids)) or Q()) &
+        ((search and (
+            Q(device__name__icontains=search) |
+            Q(device_type__parameter__icontains=search)
+        )) or Q())
     ).order_by(
         *((order_by and (f"-{order_by}",)) or ())
     )
